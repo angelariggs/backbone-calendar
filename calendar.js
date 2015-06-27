@@ -1,76 +1,76 @@
-$(document).ready(function() {
+var dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-  var DayModel = Backbone.Model.extend({
-      defaults: {"day" : 0, "weekday":"", "month":0},
-      initialize: function() {
-        var calDate = new Date();
-        var weekday = new Array(7);
-        weekday[0]=  "Sunday";
-        weekday[1] = "Monday";
-        weekday[2] = "Tuesday";
-        weekday[3] = "Wednesday";
-        weekday[4] = "Thursday";
-        weekday[5] = "Friday";
-        weekday[6] = "Saturday";
+//this function represents the last day of the month, not total number of days
+//month+1 makes the months 1-indexed; having '0' in the day param means that the functions rolls back to the last day of the previous month, since there is no June 0, 2015
+daysInMonth: function(year, month) {
+  return new Date(year, month+1, 0).getDate(); 
+}
 
-        console.log(weekday[calDate.getDay()]);
-      }
-  });
+//gets month and 4-digit year of today's date
+currDate = new Date();
+currMonth = currDate.getMonth();
+currYear = currDate.getFullYear();
 
-  var day = new DayModel();
+//closure for daysInMonth function
+numOfDays = daysInMonth(currYear, currMonth);
+
+//uses year and month of today's date, plus the 1st of the month in the day param
+//getDay() is an integer 0-6 representing the weekday
+var firstDay = new Date(currYear, currMonth, 1);
+var startingDay = firstDay.getDay();
+
+var MonthModel = Backbone.Model.extend({
+  defaults: {}  
+});// closes DayModel
+
+//loop for 12 months
+var newMonth = function(){
+  for (i=0; i<12; i++) {
+    newColl.add({
+      year: currYear,
+      month: i,
+      monthLength: daysInMonth(currYear,i),
+      monthStart: new Date(currYear, i, 1).getDay();
+    });
+  }
+}
+
+var MonthView = Backbone.View.extend({
+  model: MonthModel;
+  //header to list days of the week on calendar
+  render: function() {
+    var html1 = '<table class="cal-table">';
+    var html2 = html1 += '<tr><th colspan="7">';
+    var html3 = html2 += '</th></tr>';
+    var html4 = html3 += '<tr class = "cal-header">';
+     for (i=0; i<=6; i++) {
+      var html5 = html4 += '<td class="cal-header-day">';
+      var html6 = html5 += dayNames[i];
+      var html7 = html6+= '</td>';
+     }
+    var html8 = html7 += '</tr><tr>';
+
+    this.$el.html(html8);
+  }
+});// closes MonthView
+
+var MonthColl = Backbone.Collection.extend({
+  model: MonthModel,
+
+  initialize: function() {
+    this.listenTo(this.collection, 'add', this.addView);
+  },
+  addView: function() {
+    var view = new MonthView({model:MonthModel});
+    view.render();
+    this.$(#calendardiv).append(view.$el);
+  }
 
 
-  var DayView = Backbone.View.extend({
-    render: function() {
-      var dayNum = this.model.get("day");
-      var dayWeekday = this.model.get("weekday");
-      this.$el.html(dayNum);
-    }
-  });
+});//closes MonthColl
 
-  // var calArr = []
-  // for (m=0; m<12; m++) {
-  //   calArr.push(this.m[i])
-  // }
+var newColl = new MonthColl();
 
-  //new Date(year, month[i], day[i])
 
-  var DayColl = Backbone.Collection.extend({
-    model: DayModel
-  });
 
-  var DayCollView = Backbone.View.extend({
-    render: function() {
-      var today = new Date
-      var year = today.getDate();
-      var day = today.getDay();
-      var month = today.getMonth();
-      
-      function daysInMonth(month,year) {
-        return new Date(year, month+1, 0).getDate();
-      }
-      console.log(daysInMonth(5, 2015));
 
-      var calTable = '<table border="1" style="width:100%"><tr><td>Hello</td></tr><tr></tr><tr></tr><tr></tr><tr></tr></table>'
-      this.$el.html(calTable + today);
-    },
-    initialize: function(){
-      this.calArr = [];
-    }
-  });
-
-  var dayColl = new DayColl();
-  var dayCollView = new DayCollView({
-    collection:dayColl
-  });
-  var dayView = new DayView({
-    model:day
-  });
-
-  dayCollView.render();
-  dayView.render();
-
-  $("#calendardiv").append(dayView.$el);
-  //$("#calendardiv").append(dayCollView.$el);
-
-});
